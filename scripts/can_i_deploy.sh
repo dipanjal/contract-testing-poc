@@ -18,8 +18,11 @@ PACT_BROKER_PASSWORD="${PACT_BROKER_PASSWORD:-pactbroker}"
 ENV_NAME="${PACT_BROKER_ENV_NAME:-test}"
 
 # Constants
-PROVIDER_NAME="sync-provider"
+CONSUMER_NAME="transaciton-sync-consumer"
 PACT_DO_NOT_TRACK=1
+CONTRACT_VERSION=$(git rev-parse --short HEAD)
+
+echo "CONTRACT VERSION: $CONTRACT_VERSION"
 
 # FIND Docker Network
 PROJECT_NAME=$(basename "$(pwd)")  # Get current directory name (project name)
@@ -44,8 +47,8 @@ $PACT_CLI \
   --broker-base-url "$PACT_BROKER_URL" \
   --broker-username "$PACT_BROKER_USERNAME" \
   --broker-password "$PACT_BROKER_PASSWORD" \
-  --pacticipant "$PROVIDER_NAME" \
-  --version "$APP_VERSION" \
+  --pacticipant "$CONSUMER_NAME" \
+  --version "$CONTRACT_VERSION" \
   --to-environment "$ENV_NAME" \
   --retry-while-unknown 0 \
   --retry-interval 10

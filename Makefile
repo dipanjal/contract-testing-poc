@@ -1,4 +1,4 @@
-all: install
+all: init
 
 run-broker:
 	@docker-compose up -d
@@ -14,10 +14,12 @@ clean-pacts:
 	@rm -rf ./src/provider/pact-logs
 	@rm -rf ./src/consumer/pacts
 
-init: run-broker install clean-pacts
-
 test:
 	./scripts/test.sh
+
+init: run-broker install clean-pacts
+
+reboot: stop-broker init
 
 can-i-deploy:
 	./scripts/can_i_deploy.sh
