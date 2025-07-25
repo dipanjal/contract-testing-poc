@@ -9,8 +9,6 @@ from src import (
     PACT_BROKER_USERNAME,
     PACT_BROKER_PASSWORD,
     PACT_BROKER_URL,
-    APP_VERSION,
-    APP_BRANCH,
     SYNC_SERVICE_URL
 )
 
@@ -18,14 +16,14 @@ PROVIDER_NAME = "sync-provider"
 
 CURRENT_DIR = Path(__file__).parent.resolve()
 
-@pytest.fixture
-def broker_opts() -> dict:
+@pytest.fixture(scope="session")
+def broker_opts(contract_version, contract_branch) -> dict:
     return {
         'broker_username': PACT_BROKER_USERNAME,
         'broker_password': PACT_BROKER_PASSWORD,
         'broker_url': PACT_BROKER_URL,
-        'publish_version': APP_VERSION,
-        'provider_version_branch': APP_BRANCH,
+        'publish_version': contract_version,
+        'provider_version_branch': contract_branch,
         'publish_verification_results': True,
     }
 

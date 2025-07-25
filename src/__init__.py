@@ -2,7 +2,9 @@ from os import environ
 
 # App Constants
 APP_VERSION = "1.0.0"  # TODO: this should be short git commit hash
-APP_BRANCH = "main"
+
+# Consumer Constants
+CONSUMER_NAME = "transaciton-sync-consumer"
 
 # Broker Constants
 PACT_BROKER_URL = environ.get('PACT_BROKER_URL', 'http://localhost:9292')

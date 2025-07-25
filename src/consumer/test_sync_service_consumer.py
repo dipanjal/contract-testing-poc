@@ -3,7 +3,7 @@ from pathlib import Path
 import pytest
 from pact import Consumer, Provider, Term, Format, Like, Pact
 
-from src import PACT_BROKER_URL, PACT_BROKER_USERNAME, PACT_BROKER_PASSWORD, APP_VERSION, APP_BRANCH
+from src import PACT_BROKER_URL, PACT_BROKER_USERNAME, PACT_BROKER_PASSWORD, CONSUMER_NAME
 from src.consumer.sync_service_client import SimpleSyncServiceClient
 
 # Mock Server Constants
@@ -35,11 +35,17 @@ def broker_opts() -> dict[str, any]:
     )
 
 @pytest.fixture(scope="session")
-def mock_server(pact_dir, pact_log_dir, broker_opts):
+def mock_server(
+    pact_dir,
+    pact_log_dir,
+    broker_opts,
+    contract_version,
+    contract_branch
+):
     pact: Pact = Consumer(
-        "transaciton-sync-consumer",
-        version=APP_VERSION,
-        branch=APP_BRANCH
+        CONSUMER_NAME,
+        version=contract_version,
+        branch=contract_branch
     ).has_pact_with(
         provider=Provider("sync-provider"),
         host_name=MOCK_SERVER_HOST,
