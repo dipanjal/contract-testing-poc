@@ -34,7 +34,7 @@ def pact_log_dir() -> str:
     """Fixture for the Pact directory."""
     return str(CURRENT_DIR / "pact-logs")
 
-@pytest.mark.verify_contracts
+@pytest.mark.verify_contract
 def test_product_service_provider_against_broker(
     broker_opts: dict, pact_log_dir
 ):

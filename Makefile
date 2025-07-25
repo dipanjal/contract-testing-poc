@@ -12,9 +12,11 @@ can-i-deploy:
 verify:
 	./scripts/verify.sh
 
-clean-pacts:
-	@ rm -rf ./src/consumer/pact-logs
-	@ rm -rf ./src/consumer/pacts
-	@ rm -rf ./src/provider/pacts-logs
+contract-test: test can-i-deploy verify
 
-.PHONY: install test verify
+clean-pacts:
+	@rm -rf ./src/consumer/pact-logs
+	@rm -rf ./src/provider/pact-logs
+	@rm -rf ./src/consumer/pacts
+
+.PHONY: install test verify can-i-deploy contract-test clean-pacts

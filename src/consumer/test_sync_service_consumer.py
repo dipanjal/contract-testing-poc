@@ -59,6 +59,7 @@ class TestSyncServiceConsumer:
         """Setup for each test method"""
         self.client = SimpleSyncServiceClient(MOCK_SERVER_URL)
 
+    @pytest.mark.contract
     @pytest.mark.asyncio
     async def test_get_version(self, mock_server):
         """Test getting version information from sync-service"""
