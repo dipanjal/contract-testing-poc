@@ -12,3 +12,4 @@ __pycache__
 **/pacts
 **/pact-logs
 log
+pact-mock-service.log
