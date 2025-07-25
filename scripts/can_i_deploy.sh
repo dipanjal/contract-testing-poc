@@ -2,7 +2,6 @@
 
 # Add local environment variables from container-local.env
 local_env_file="./envs/local.env"
-
 if [ -f "$local_env_file" ]; then
     # Read the file line by line
     while IFS= read -r line; do
