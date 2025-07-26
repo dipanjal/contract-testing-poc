@@ -2,9 +2,9 @@ import subprocess
 from pathlib import Path
 
 
-def execute_command(command_parts: list[str]) -> str:
+def execute_command(command_segments: list[str]) -> str:
     return subprocess.check_output(
-        command_parts
+        command_segments
     ).decode("ascii").strip()
 
 def git_revision_short_hash() -> str:
