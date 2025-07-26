@@ -1,24 +1,21 @@
-"""
-Application entry point for the sync-service
-"""
-
-
-from fastapi import FastAPI, HTTPException, Request
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
-import uvicorn
-from contextlib import asynccontextmanager
-from datetime import datetime, timezone
 import logging
+from contextlib import asynccontextmanager
+from pathlib import Path
 
-# Import controllers
-import provider_state_controller, sync_controller
+import uvicorn
+from fastapi import FastAPI
+
+from src.provider import (
+    sync_controller,
+    provider_state_controller
+)
 
 # ────────────────────────────────────────────────────────────────────────────────
 # Logging
 # ────────────────────────────────────────────────────────────────────────────────
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+PROVIDER_DIR = str(Path(__file__).parent.resolve())
 
 # ────────────────────────────────────────────────────────────────────────────────
 # Lifespan
@@ -47,5 +44,15 @@ app = FastAPI(
 app.include_router(sync_controller.router)
 app.include_router(provider_state_controller.router)
 
+# running uvicorn as a simple python server
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=5000)
+    uvicorn.run(
+        "main:app",
+        host="0.0.0.0",
+        port=5000,
+        reload=True,
+        reload_dirs=[PROVIDER_DIR]
+    )
+
+# Alternatively, you can use to run the server from the command line or from a bash script like this
+# uvicorn ./src/provider/main:app --host=0.0.0.0 --port=5000 --reload-dir=./src/provider --reload
