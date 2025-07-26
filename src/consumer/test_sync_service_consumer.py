@@ -3,13 +3,20 @@ from pathlib import Path
 import pytest
 from pact import Consumer, Provider, Term, Format, Like, Pact
 
-from src import PACT_BROKER_URL, PACT_BROKER_USERNAME, PACT_BROKER_PASSWORD, CONSUMER_NAME
+from src.consumer import APP_NAME
+from src.consumer.constants import (
+    PACT_BROKER_URL,
+    PACT_BROKER_USERNAME,
+    PACT_BROKER_PASSWORD,
+    MOCK_SERVER_HOST,
+    MOCK_SERVER_PORT,
+    MOCK_SERVER_URL,
+    SYNC_SERVICE_NAME, PUBLISH_TO_BROKER,
+)
 from src.consumer.sync_service_client import SimpleSyncServiceClient
 
-# Mock Server Constants
-MOCK_SERVER_HOST = "localhost"
-MOCK_SERVER_PORT = 1234
-MOCK_SERVER_URL = f"http://{MOCK_SERVER_HOST}:{MOCK_SERVER_PORT}"
+CONSUMER_NAME = APP_NAME
+PROVIDER_NAME = SYNC_SERVICE_NAME
 
 CURRENT_DIR = Path(__file__).parent.resolve()
 
@@ -31,7 +38,7 @@ def broker_opts() -> dict[str, any]:
         broker_base_url=PACT_BROKER_URL,
         broker_username=PACT_BROKER_USERNAME,
         broker_password=PACT_BROKER_PASSWORD,
-        publish_to_broker=True,
+        publish_to_broker=PUBLISH_TO_BROKER,
     )
 
 @pytest.fixture(scope="session")
@@ -47,7 +54,7 @@ def mock_server(
         version=contract_version,
         branch=contract_branch
     ).has_pact_with(
-        provider=Provider("sync-provider"),
+        provider=Provider(PROVIDER_NAME),
         host_name=MOCK_SERVER_HOST,
         port=MOCK_SERVER_PORT,
         pact_dir=pact_dir,
