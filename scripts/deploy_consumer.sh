@@ -15,14 +15,12 @@ fi
 PACT_BROKER_URL=${PACT_BROKER_CONTAINER_URL:-http://broker:9292}
 PACT_BROKER_USERNAME="${PACT_BROKER_USERNAME:-pactbroker}"
 PACT_BROKER_PASSWORD="${PACT_BROKER_PASSWORD:-pactbroker}"
-ENV_NAME="${PACT_BROKER_ENV_NAME:-test}"
+DEPLOYMENT_ENV="${PACT_BROKER_ENV_NAME:-test}"
 
 # Constants
-CONSUMER_NAME="transaction-service"
+APP_NAME="transaction-service"
 PACT_DO_NOT_TRACK=1
 CONTRACT_VERSION=$(git rev-parse --short HEAD)
-
-echo "CONTRACT VERSION: $CONTRACT_VERSION in ENV: $ENV_NAME"
 
 # FIND Docker Network
 PROJECT_NAME=$(basename "$(pwd)")  # Get current directory name (project name)
@@ -41,14 +39,11 @@ PACT_CLI="docker run --rm \
   -e PACT_DO_NOT_TRACK=$PACT_DO_NOT_TRACK \
   pactfoundation/pact-cli:latest"
 
-# Check if can deploy
 $PACT_CLI \
-  pact-broker can-i-deploy \
+pact-broker record-deployment \
   --broker-base-url "$PACT_BROKER_URL" \
   --broker-username "$PACT_BROKER_USERNAME" \
   --broker-password "$PACT_BROKER_PASSWORD" \
-  --pacticipant "$CONSUMER_NAME" \
+  --pacticipant "$APP_NAME" \
   --version "$CONTRACT_VERSION" \
-  --to-environment "$ENV_NAME" \
-  --retry-while-unknown 0 \
-  --retry-interval 10
+  --environment "$DEPLOYMENT_ENV"

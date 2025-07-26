@@ -1,2 +1,2 @@
 source .venv/bin/activate
-python -m pytest -m 'not verify_contract'
+python -m pytest -m 'contract'
