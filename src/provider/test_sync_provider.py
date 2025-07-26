@@ -12,6 +12,7 @@ from src.provider.constants import (
     PACT_BROKER_URL,
     SELF_HOST_URL
 )
+from src.provider.utils import service_running
 
 PROVIDER_NAME = APP_NAME
 
@@ -32,24 +33,28 @@ def broker_opts(contract_version, contract_branch) -> dict:
 def pact_log_dir() -> str:
     return str(CURRENT_DIR / "pact-logs")
 
-@pytest.mark.verify_contract
-def test_product_service_provider_against_broker(
-    broker_opts: dict, pact_log_dir
-):
-    verifier = Verifier(
-        provider=PROVIDER_NAME,
-        provider_base_url=SELF_HOST_URL,
-    )
+@pytest.mark.asyncio
+class TestAndVerifyProvider:
 
-    result, _ = verifier.verify_with_broker(
-        **broker_opts,
-        verbose=False,
-        provider_states_setup_url=f"{SELF_HOST_URL}/_pact/provider_states",
-        enable_pending=True,
-        log_dir=pact_log_dir,
-        consumer_selectors=[
-            {'mainBranch': True},
-            {'deployedOrReleased': True},
-        ]
-    )
-    assert result == 0
+    @pytest.mark.verify_contract
+    async def test_sync_service_provider_against_broker(
+        self, broker_opts: dict, pact_log_dir
+    ):
+        async with service_running():
+            verifier = Verifier(
+                provider=PROVIDER_NAME,
+                provider_base_url=SELF_HOST_URL,
+            )
+
+            result, _ = verifier.verify_with_broker(
+                **broker_opts,
+                verbose=False,
+                provider_states_setup_url=f"{SELF_HOST_URL}/_pact/provider_states",
+                enable_pending=True,
+                log_dir=pact_log_dir,
+                consumer_selectors=[
+                    {'mainBranch': True},
+                    {'deployedOrReleased': True},
+                ]
+            )
+            assert result == 0
