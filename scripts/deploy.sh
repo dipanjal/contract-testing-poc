@@ -16,11 +16,12 @@ PACT_BROKER_URL=${PACT_BROKER_CONTAINER_URL:-http://broker:9292}
 PACT_BROKER_USERNAME="${PACT_BROKER_USERNAME:-pactbroker}"
 PACT_BROKER_PASSWORD="${PACT_BROKER_PASSWORD:-pactbroker}"
 DEPLOYMENT_ENV="${PACT_BROKER_ENV_NAME:-test}"
-
-# Constants
-APP_NAME="sync-service"
 PACT_DO_NOT_TRACK=1
+
+# Reading current commit hash from git head
 CONTRACT_VERSION=$(git rev-parse --short HEAD)
+
+echo "Deploying -> $PARTICIPANT Version: $CONTRACT_VERSION in ENV: $ENV_NAME"
 
 # FIND Docker Network
 PROJECT_NAME=$(basename "$(pwd)")  # Get current directory name (project name)
@@ -44,6 +45,6 @@ pact-broker record-deployment \
   --broker-base-url "$PACT_BROKER_URL" \
   --broker-username "$PACT_BROKER_USERNAME" \
   --broker-password "$PACT_BROKER_PASSWORD" \
-  --pacticipant "$APP_NAME" \
+  --pacticipant "$PARTICIPANT" \
   --version "$CONTRACT_VERSION" \
   --environment "$DEPLOYMENT_ENV"

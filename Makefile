@@ -1,3 +1,6 @@
+CONSUMER_NAME=transaction-service
+PROVIDER_NAME=sync-service
+
 all: init
 
 start-broker:
@@ -21,17 +24,20 @@ test: clean-pacts
 
 init: start-broker install clean-pacts
 
-can-i-deploy:
-	./scripts/can_i_deploy.sh
+can-i-deploy-consumer:
+	PARTICIPANT=${CONSUMER_NAME} ./scripts/can_i_deploy.sh
+
+can-i-deploy-provider:
+	PARTICIPANT=${PROVIDER_NAME} ./scripts/can_i_deploy.sh
 
 verify:
 	./scripts/verify.sh
 
-deploy-provider:
-	./scripts/deploy_provider.sh
-
 deploy-consumer:
-	./scripts/deploy_consumer.sh
+	PARTICIPANT=${CONSUMER_NAME} ./scripts/deploy.sh
+
+deploy-provider:
+	PARTICIPANT=${PROVIDER_NAME} ./scripts/deploy.sh
 
 contract-test: test can-i-deploy verify
 
