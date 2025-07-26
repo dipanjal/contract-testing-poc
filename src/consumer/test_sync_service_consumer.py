@@ -13,7 +13,7 @@ from src.consumer.constants import (
     MOCK_SERVER_URL,
     SYNC_SERVICE_NAME, PUBLISH_TO_BROKER,
 )
-from src.consumer.sync_service_client import SimpleSyncServiceClient
+from src.consumer.sync_service_client import SimpleSyncServiceClient, VersionResponse
 
 CONSUMER_NAME = APP_NAME
 PROVIDER_NAME = SYNC_SERVICE_NAME
@@ -110,13 +110,13 @@ class TestSyncServiceConsumer:
 
         # Start the mock server and run the test
         with mock_server:
-            result = await self.client.get_version()
+            resp: VersionResponse = await self.client.get_version()
 
             # Verify the response structure
-            assert result['service'] == 'sync-service'
-            assert isinstance(result['version'], str)
-            assert isinstance(result['build'], str)
-            assert isinstance(result['timestamp'], str)
+            assert resp.service == 'sync-service'
+            assert isinstance(resp.version, str)
+            assert isinstance(resp.build, str)
+            assert isinstance(resp.timestamp, str)
 
     # @pytest.mark.asyncio
     # async def test_get_version_service_unavailable(self, pact):

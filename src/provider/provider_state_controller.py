@@ -2,6 +2,8 @@ from fastapi import APIRouter, HTTPException
 from typing import TYPE_CHECKING, Dict, Any
 from pydantic import BaseModel
 
+from src.provider.sync_controller import VersionResponse
+
 if TYPE_CHECKING:
     pass
 
@@ -35,7 +37,7 @@ async def mock_pact_provider_states(
     """
     mapping = {
         "sync-service is running": mock_version_info_success,
-        "sync-service is unavailable": mock_service_unavailable,
+        # "sync-service is unavailable": mock_service_unavailable,
     }
     
     if state.state not in mapping:
@@ -44,21 +46,23 @@ async def mock_pact_provider_states(
             detail=f"Unknown provider state: {state.state}"
         )
     
-    return mapping[state.state]()
+    schema: BaseModel = mapping[state.state]()
+    return schema.model_dump(exclude_none=True)
 
 
-def mock_version_info_success() -> Dict[str, Any]:
+def mock_version_info_success() -> VersionResponse:
     """Mock the provider state for sync-service is running."""
-    return {
+    data = {
         "service": "sync-service",
         "version": "1.0.0",
         "build": "20240101-abc123",
         "timestamp": "2025-07-24T15:43:24.204757Z"
     }
+    return VersionResponse(**data)
 
 
-def mock_service_unavailable() -> Dict[str, Any]:
-    """Mock the provider state for sync-service is unavailable."""
-    return {
-        'error': 'Service temporarily unavailable'
-    }
+# def mock_service_unavailable() -> Dict[str, Any]:
+#     """Mock the provider state for sync-service is unavailable."""
+#     return {
+#         'error': 'Service temporarily unavailable'
+#     }

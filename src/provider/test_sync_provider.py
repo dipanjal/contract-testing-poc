@@ -48,7 +48,8 @@ class TestAndVerifyProvider:
 
             result, _ = verifier.verify_with_broker(
                 **broker_opts,
-                verbose=False,
+                verbose=True,
+                log_level="DEBUG",
                 provider_states_setup_url=f"{SELF_HOST_URL}/_pact/provider_states",
                 enable_pending=True,
                 log_dir=pact_log_dir,
