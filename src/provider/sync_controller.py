@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Optional
 
 from fastapi import APIRouter
 from pydantic import BaseModel
@@ -12,7 +13,7 @@ class VersionResponse(BaseModel):
     service: str
     version: str
     build: str
-    timestamp: str
+    timestamp: Optional[str] = None
 
 
 class HealthResponse(BaseModel):

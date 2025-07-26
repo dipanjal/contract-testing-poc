@@ -90,7 +90,9 @@ class TestSyncServiceConsumer:
                 matcher=r'^\d{8}-[a-f0-9]+$',
                 generate='20240101-abc123'
             ),
-            'timestamp': Format().iso_8601_datetime(with_ms=True)
+            # NOTE: This is removed because the consumer don't care about the timestamp
+            # So removing timestamp from provider response will not break anything
+            # 'timestamp': Format().iso_8601_datetime(with_ms=True)
         }
 
         (
@@ -116,7 +118,6 @@ class TestSyncServiceConsumer:
             assert resp.service == 'sync-service'
             assert isinstance(resp.version, str)
             assert isinstance(resp.build, str)
-            assert isinstance(resp.timestamp, str)
 
     # @pytest.mark.asyncio
     # async def test_get_version_service_unavailable(self, pact):

@@ -1,6 +1,6 @@
-import aiohttp
-from typing import Dict, Any
+from typing import Optional
 
+import aiohttp
 from pydantic import BaseModel
 
 
@@ -8,7 +8,7 @@ class VersionResponse(BaseModel):
     service: str
     version: str
     build: str
-    timestamp: str
+    timestamp: Optional[str] = None
 
 class HealthResponse(BaseModel):
     status: str
