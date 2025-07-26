@@ -3,6 +3,8 @@ from datetime import datetime
 from fastapi import APIRouter
 from pydantic import BaseModel
 
+from src.provider import APP_NAME, APP_VERSION
+
 router = APIRouter(tags=["Version"])
 
 
@@ -22,8 +24,8 @@ class HealthResponse(BaseModel):
 async def get_version() -> VersionResponse:
     """Get service version information"""
     return VersionResponse(
-        service="sync-service",
-        version="1.0.0",
+        service=APP_NAME,
+        version=APP_VERSION,
         build="20240101-abc123",
         timestamp=datetime.utcnow().isoformat() + "Z"
     )
