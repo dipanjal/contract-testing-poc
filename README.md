@@ -47,7 +47,8 @@ The **Broker** is a centralized repository that stores and manages contracts bet
 
 ## How Pact Testing Works
 
-### 1. Consumer-Driven Approach (Consumer Comes First)
+### 1. Consumer-Driven Approach
+Consumer comes first
 
 ```
 ┌─────────────────┐    Defines Expectations    ┌─────────────────┐
@@ -501,7 +502,6 @@ PACT_LOG_LEVEL=DEBUG make contract-test
 PACT_BROKER_URL=http://localhost:9292
 PACT_BROKER_USERNAME=pactbroker
 PACT_BROKER_PASSWORD=pactbroker
-
 ```
 
 ## Contributing
