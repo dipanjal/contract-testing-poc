@@ -220,6 +220,11 @@ make deploy-provider
 ## Understanding the Tests
 
 ### Consumer Test Example
+This includes
+1. Creating Mock Server
+2. Configuring Broker with `publish_to_broker=True`
+3. Feed the mock server with response that the consumer expects from the provider
+4. Assert the response from the mock server
 
 ```python
 # import all necessary pact components
@@ -303,6 +308,11 @@ async def test_get_version(mock_server):
 Checkout the full code example here: https://github.com/dipanjal/contract-testing-poc/blob/main/src/consumer/test_sync_service_consumer.py
 
 ### Provider Verification Example
+This includes:
+1. Fetch contracts from the Broker
+2. Cross-match contract states / scenarios with provider states from endpoint `/_pact/provider_states`
+3. Assert verification result `SUCCESS=0` and `FAIL=1`
+4. Publish the verification result to the Broker
 
 ```python
 # Provider verifies against real implementation
@@ -321,6 +331,14 @@ assert result == 0  # Passes if no breaking changes
 Checkout the full code example here: https://github.com/dipanjal/contract-testing-poc/blob/main/src/provider/test_sync_provider.py
 
 ## Breaking Change Scenarios
+If any response schema change in the `Provider` doesn't match with the contract published by the `Consumer`,
+it will be considered as a **BREAKING CHANGE!**
+
+This check can be done by verifying teh Provider after schema changes.
+```bash
+# verify the provider after response schema changed
+make verify
+```
 
 ### 1. Removing a Required Field
 
@@ -362,7 +380,33 @@ Checkout the full code example here: https://github.com/dipanjal/contract-testin
 }
 ```
 
-**Result:** ❌ Contract test fails
+**Result:** ❌ Provider verification fails
+
+### 3. Removing Unnecessary Field 
+**Before:**
+```json
+{
+  "service": "sync-service",
+  "version": "1.0.0",
+  "build": "20240101-abc123",
+  "timestamp": "2025-07-24T15:43:24.204757Z"
+}
+```
+**After:**
+```json
+{
+  "service": "sync-service",
+  "version": "1.0.0",
+  "build": "20240101-abc123"
+  // timestamp removed - NON BREAKING CHANGE
+}
+```
+
+**Result:** ✅Provider verification succeeded
+
+If you take a look at the contract published by the consumer http://localhost:9292/pacts/provider/sync-service/consumer/transaction-service/latest
+You will see, consumer don't expect to have `timestamp` in the response.
+Therefore, any removal or changes in the `timestamp` field wouldn't break our consumer code. 
 
 ## Best Practices
 
