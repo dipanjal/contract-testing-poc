@@ -166,9 +166,8 @@ make verify
 ```
 
 This command:
-1. Cleans previous pact files
-2. Runs consumer tests (creates contracts)
-3. Runs provider verification (tests against real API)
+1. Runs provider verification (test contracts against real API)
+2. Publish verification result to the broker
 
 ## Available Commands
 
