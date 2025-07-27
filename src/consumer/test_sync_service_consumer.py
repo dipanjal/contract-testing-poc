@@ -90,11 +90,14 @@ class TestSyncServiceConsumer:
                 matcher=r'^\d{8}-[a-f0-9]+$',
                 generate='20240101-abc123'
             ),
-            # NOTE: This is removed because the consumer don't care about the timestamp
+            # NOTE: Assume timestamp is being used nowhere in the consumer side
+            # It's an optional field that consumer doesn't care about
             # So removing timestamp from provider response will not break anything
             # 'timestamp': Format().iso_8601_datetime(with_ms=True)
         }
 
+        # Feed the mock server with expected response from /version endpoint.
+        # This is crucial because it generates the contract and acts as a mock provider
         (
             mock_server
             .given('sync-service is running')
@@ -114,10 +117,11 @@ class TestSyncServiceConsumer:
         with mock_server:
             resp: VersionResponse = await self.client.get_version()
 
-            # Verify the response structure
+            # assert the response data
+            assert resp.service is not None and isinstance(resp.service, str)
+            assert resp.version is not None and isinstance(resp.version, str)
+            assert resp.build is not None and isinstance(resp.build, str)
             assert resp.service == 'sync-service'
-            assert isinstance(resp.version, str)
-            assert isinstance(resp.build, str)
 
     # @pytest.mark.asyncio
     # async def test_get_version_service_unavailable(self, pact):
