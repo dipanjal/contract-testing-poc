@@ -1,10 +1,42 @@
 # Contract Testing with Pact
 
-A comprehensive example demonstrating Consumer-Driven Contract Testing using Pact in Python with FastAPI and aiohttp.
+A comprehensive example demonstrating Consumer-Driven Contract Testing using Pact in Python with FastAPI.
 
 ## What is Contract Testing?
 
 Contract testing is a technique for testing the integration points between services (consumers and providers) by verifying that both sides of the contract are compatible. Unlike integration tests that test the entire system, contract tests focus on the **interface** between services.
+
+## Key Definitions
+
+### Consumer
+The **Consumer** is the service that uses (consumes) an API. It's typically the client application that makes HTTP requests to another service. In contract testing, the consumer:
+- Defines what it expects from the provider
+- Creates contracts based on its expectations
+- Tests against a mock provider to ensure its expectations are met
+- Publishes contracts to the broker for provider verification
+
+### Provider
+The **Provider** is the service that exposes an API for others to consume. It's the server that responds to HTTP requests. In contract testing, the provider:
+- Implements the actual API endpoints
+- Verifies that it can fulfill the contracts published by consumers
+- Tests its real implementation against consumer expectations
+- Publishes verification results back to the broker
+
+### Contract
+A **Contract** (or Pact) is a formal agreement between a consumer and provider that specifies:
+- The expected request format (HTTP method, path, headers, body)
+- The expected response format (status code, headers, body structure)
+- Any provider states or scenarios that must be satisfied
+- Version information for tracking contract evolution
+
+Contracts serve as living documentation and are used to detect breaking changes before they reach production.
+
+### Broker
+The **Broker** is a centralized repository that stores and manages contracts between consumers and providers. It:
+- Stores contracts published by consumers
+- Provides contracts to providers for verification
+- Tracks verification results and contract versions
+- Acts as a single source of truth for all contract information
 
 ### Why Contract Testing?
 
