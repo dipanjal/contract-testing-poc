@@ -15,7 +15,7 @@ Contract testing is a technique for testing the integration points between servi
 
 ## How Pact Testing Works
 
-### 1. Consumer-Driven Approach
+### 1. Consumer-Driven Approach (Consumer Comes First)
 
 ```
 ┌─────────────────┐    Defines Expectations    ┌─────────────────┐
@@ -35,6 +35,11 @@ Contract testing is a technique for testing the integration points between servi
 ```
 
 ### 2. Contract Testing Flow
+
+1. Consumer defines it's expectation and mock the provided response using Mock Server provided by Pact, which generates the contract file.
+2. Consumer publishes the generated contracts to the Pact Broker which acts like a storage for keeping and sharing different contract versions between the consumer and provider.
+3. Provider talks to the broker and verifies the contract states or scenarios with it's own mocked version of actual endpoint, defined in `/_pact/provider_states`.
+4. Finally, Provider publishes the verification result to the broker.
 
 ```mermaid
 sequenceDiagram
@@ -91,7 +96,7 @@ sequenceDiagram
 │  │ - build         │    │ - no build      │               │
 │  └─────────────────┘    └─────────────────┘               │
 └───────────────────────────────────────────────────────────┘
-                              │ ❌ FAILS
+                              │ ❌ FAILS (build is required)
                               ▼
                     Breaking Change Detected!
 ```
@@ -120,32 +125,44 @@ contract-testing-poc/
 ## Quick Start
 
 ### Prerequisites
-
 - Python 3.11+
 - Docker and Docker Compose
 - Make (optional, but recommended)
 
 ### 1. Start the Pact Broker
-
 ```bash
 # Start the Pact Broker (contract repository)
 make start-broker
 ```
-
 This starts a Pact Broker at `http://localhost:9292` where contracts are stored and shared.
 
 ### 2. Install Dependencies
-
 ```bash
 # Install Python dependencies
 make install
 ```
+This command:
+1. Creates new virtual environment `.venv`
+2. Install necessary dependencies from `requirements.txt` file
 
-### 3. Run Contract Tests
+Recommended: `make init`
+> You can also run `Step 1` and `Step 2` together with `make init`
+> It also cleans up existing pact files 
 
+### 3. Run Consumer Tests
 ```bash
-# Run the complete contract testing flow
-make contract-test
+# Run the consumer tests to generate the contracts and publish to the broker
+make test
+```
+This command:
+1. Cleans previous pact files
+2. Runs consumer tests (creates contracts)
+3. Publish the contracts to the Broker
+
+### 4. Run Provider Tests
+```bash
+# Run provider tests to verify published contracts as well as push the verification result to the broker
+make verify
 ```
 
 This command:
@@ -158,6 +175,9 @@ This command:
 ### Basic Commands
 
 ```bash
+# Recommended for initial setup
+make init 
+
 # Start Pact Broker
 make start-broker
 
@@ -174,14 +194,11 @@ make clean-pacts
 ### Testing Commands
 
 ```bash
-# Run consumer tests only
+# Run consumer tests only and publish contracts to the broker
 make test
 
 # Run provider verification only
 make verify
-
-# Run complete contract testing
-make contract-test
 ```
 
 ### Deployment Commands
@@ -205,20 +222,85 @@ make deploy-provider
 ### Consumer Test Example
 
 ```python
-# Consumer defines what it expects from the provider
-expected_version = {
-    "service": "sync-service",
-    "version": "1.0.0",
-    "build": "20240101-abc123",
-    "timestamp": "2025-07-24T15:43:24.204757Z"
-}
+# import all necessary pact components
+from pact import Consumer, Provider, Term, Format, Like, Pact
 
-# Test against mock server
-with mock_server:
-    resp = await client.get_version()
-    assert resp.service == 'sync-service'
-    assert resp.timestamp is not None
+# Create Pact Mock Server
+@pytest.fixture(scope="session")
+def mock_server(
+    # Fixtures
+    pact_dir,
+    pact_log_dir,
+    broker_opts,
+    contract_version,
+    contract_branch
+):
+    pact: Pact = Consumer(
+        CONSUMER_NAME,
+        version=contract_version,
+        branch=contract_branch
+    ).has_pact_with(
+        provider=Provider(PROVIDER_NAME),
+        host_name=MOCK_SERVER_HOST,
+        port=MOCK_SERVER_PORT,
+        broker_base_url=PACT_BROKER_URL,
+        broker_username=PACT_BROKER_USERNAME,
+        broker_password=PACT_BROKER_PASSWORD,
+        publish_to_broker=True,  # This is important to publish contracts right away
+    )
+    try:
+        pact.start_service()
+        yield pact
+    finally:
+        pact.stop_service()
+
+@pytest.mark.contract
+@pytest.mark.asyncio
+async def test_get_version(mock_server):
+   # Consumer defines what it expects from the provider
+   expected_version = {
+      'service': Term(
+          matcher=r'^sync-service$',
+          generate='sync-service'
+      ),
+      'version': Term(
+          matcher=r'^\d+(.\d+){2,3}$',
+          generate='1.0.0'
+      ),
+      'build': Term(
+          matcher=r'^\d{8}-[a-f0-9]+$',
+          generate='20240101-abc123'
+      )
+   }
+   
+   # Feed the mock server with expected response from /version endpoint.
+   # This is crucial because it generates the contract and acts as a mock provider
+   (
+      mock_server
+      .given('sync-service is running')
+      .upon_receiving('a request for version information')
+      .with_request(
+          method='GET',
+          path='/version'
+      )
+      .will_respond_with(
+          status=200,
+          headers={'Content-Type': 'application/json'},
+          body=Like(expected_version)
+      )
+   )
+   
+   # Test against mock server
+   with mock_server:
+      resp = await client.get_version()
+      # assert response
+      assert resp.service is not None and isinstance(resp.service, str)
+      assert resp.version is not None and isinstance(resp.version, str)
+      assert resp.build is not None and isinstance(resp.build, str)
+      assert resp.service == 'sync-service'
+       
 ```
+Checkout the full code example here: https://github.com/dipanjal/contract-testing-poc/blob/main/src/consumer/test_sync_service_consumer.py
 
 ### Provider Verification Example
 
@@ -236,15 +318,18 @@ result = verifier.verify_with_broker(
 assert result == 0  # Passes if no breaking changes
 ```
 
+Checkout the full code example here: https://github.com/dipanjal/contract-testing-poc/blob/main/src/provider/test_sync_provider.py
+
 ## Breaking Change Scenarios
 
-### 1. Removing a Field
+### 1. Removing a Required Field
 
 **Before:**
 ```json
 {
   "service": "sync-service",
   "version": "1.0.0",
+  "build": "20240101-abc123",
   "timestamp": "2025-07-24T15:43:24.204757Z"
 }
 ```
@@ -253,46 +338,27 @@ assert result == 0  # Passes if no breaking changes
 ```json
 {
   "service": "sync-service",
-  "version": "1.0.0"
-  // timestamp removed - BREAKING CHANGE!
+  "version": "1.0.0",
+  "timestamp": "2025-07-24T15:43:24.204757Z"
+  // build removed - BREAKING CHANGE!
 }
 ```
 
-**Result:** ❌ Contract test fails
+**Result:** ❌ Provider verification fails
 
-### 2. Making Field Optional
-
-**Before:**
-```python
-class VersionResponse(BaseModel):
-    service: str
-    version: str
-    timestamp: str  # Required
-```
-
-**After (Backward Compatible):**
-```python
-class VersionResponse(BaseModel):
-    service: str
-    version: str
-    timestamp: Optional[str] = None  # Optional
-```
-
-**Result:** ✅ Contract test passes
-
-### 3. Changing Field Type
+### 2. Changing Field Type
 
 **Before:**
 ```json
 {
-  "version": "1.0.0"  # String
+  "build": "20240101-abc123"  # String
 }
 ```
 
 **After (Breaking Change):**
 ```json
 {
-  "version": 1.0  # Number - BREAKING CHANGE!
+  "build": 20240101  # Number - BREAKING CHANGE!
 }
 ```
 
@@ -337,7 +403,7 @@ class VersionResponse(BaseModel):
 
 3. **Authentication Issues**
    - Default credentials: `pactbroker` / `pactbroker`
-   - Check `envs/local.env` for configuration
+   - Check `envs/local.env` for demo configuration
 
 4. **Test Failures**
    - Check pact logs in `src/*/pact-logs/`
@@ -361,26 +427,6 @@ PACT_BROKER_URL=http://localhost:9292
 PACT_BROKER_USERNAME=pactbroker
 PACT_BROKER_PASSWORD=pactbroker
 
-# Service Configuration
-SELF_HOST_URL=http://localhost:5000
-MOCK_SERVER_HOST=localhost
-MOCK_SERVER_PORT=1234
-```
-
-### Custom Test Configuration
-
-```python
-# In your test files
-@pytest.fixture(scope="session")
-def broker_opts() -> dict:
-    return {
-        'broker_username': 'pactbroker',
-        'broker_password': 'pactbroker',
-        'broker_url': 'http://localhost:9292',
-        'publish_version': '1.0.0',
-        'provider_version_branch': 'main',
-        'publish_verification_results': True,
-    }
 ```
 
 ## Contributing
@@ -399,6 +445,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## Resources
 
 - [Pact Documentation](https://docs.pact.io/)
-- [Consumer-Driven Contracts](https://martinfowler.com/articles/consumerDrivenContracts.html)
-- [Contract Testing Best Practices](https://docs.pact.io/implementation_guides/best_practices)
 - [Pact Python Library](https://github.com/pact-foundation/pact-python)
+- [Contract Testing Best Practices](https://docs.pact.io/implementation_guides/best_practices)
+- [Consumer-Driven Contracts](https://martinfowler.com/articles/consumerDrivenContracts.html)
