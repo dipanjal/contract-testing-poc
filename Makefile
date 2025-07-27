@@ -39,6 +39,4 @@ deploy-consumer:
 deploy-provider:
 	PARTICIPANT=${PROVIDER_NAME} ./scripts/deploy.sh
 
-contract-test: test can-i-deploy verify
-
-.PHONY: start-broker stop-broker reboot-broker install init test verify can-i-deploy contract-test clean-pacts
+.PHONY: start-broker stop-broker reboot-broker install init test verify can-i-deploy clean-pacts
